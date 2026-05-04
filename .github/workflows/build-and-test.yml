@@ -1,0 +1,36 @@
+name: Build Toolchain Image
+
+on:
+  push:
+    branches: [ main ]  # Triggers when you push to the main branch
+  pull_request:         # Triggers when you open a PR
+  workflow_dispatch:    # Adds a "Run workflow" button in the GitHub UI for manual testing
+
+jobs:
+  build-windows-image:
+    runs-on: windows-2022  # Uses a Windows VM to build the Windows container
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build Docker Image
+        run: |
+          docker build -t ghcr.io/${{ github.repository_owner }}/avr-toolchain-windows:latest .
+
+      - name: Verify Toolchain
+        run: |
+          # Run a quick check to make sure the image actually works
+          docker run --rm ghcr.io/${{ github.repository_owner }}/avr-toolchain-windows:latest avr-gcc --version
+          docker run --rm ghcr.io/${{ github.repository_owner }}/avr-toolchain-windows:latest cmake --version
+
+      - name: Push Image
+        # Only push to the registry if the build is on the main branch
+        if: github.ref == 'refs/heads/main'
+        run: docker push ghcr.io/${{ github.repository_owner }}/avr-toolchain-windows:latest
