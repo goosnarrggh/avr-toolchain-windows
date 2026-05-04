@@ -12,14 +12,15 @@ RUN [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tl
 
 # 2. Update MSYS2 and install the toolchain + extra utilities
 # We install: avr-gcc, avr-libc, cmake, ninja, make, and srecord
-RUN C:\msys64\usr\bin\bash.exe -lc "pacman --noconfirm -Syuu"; `
-    C:\msys64\usr\bin\bash.exe -lc "pacman --needed --noconfirm -S `
-    mingw-w64-x86_64-avr-gcc `
-    mingw-w64-x86_64-avr-libc `
-    mingw-w64-x86_64-cmake `
-    mingw-w64-x86_64-ninja `
-    make `
-    mingw-w64-x86_64-srecord"
+RUN C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'; `
+    C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'; `
+    C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -S `
+        mingw-w64-x86_64-avr-gcc `
+        mingw-w64-x86_64-avr-libc `
+        mingw-w64-x86_64-cmake `
+        mingw-w64-x86_64-ninja `
+        make `
+        mingw-w64-x86_64-srecord'
 
 # 3. Integrate MSYS2 into the Windows System Path
 # This allows 'avr-gcc' to be called directly from standard Windows prompts
