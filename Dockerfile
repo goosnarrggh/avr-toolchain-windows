@@ -1,0 +1,42 @@
+# Use official Microsoft base for the highest level of trust
+FROM mcr.microsoft.com/windows/servercore:ltsc2022
+
+# Set PowerShell as the default shell for setup
+SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop';"]
+
+# 1. Download the MSYS2 self-extracting archive directly from their releases
+RUN [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; \
+    Invoke-WebRequest -Uri "https://github.com/msys2/msys2-installer/releases/download/nightly-x86_64/msys2-base-x86_64-latest.sfx.exe" -OutFile "msys2.exe"; \
+    ./msys2.exe -y -oc:\; \
+    Remove-Item msys2.exe
+
+# 2. Update MSYS2 and install the toolchain + extra utilities
+# We install: avr-gcc, avr-libc, cmake, ninja, make, and srecord
+RUN C:\msys64\usr\bin\bash.exe -lc "pacman --noconfirm -Syuu"; \
+    C:\msys64\usr\bin\bash.exe -lc "pacman --needed --noconfirm -S \
+    mingw-w64-x86_64-avr-gcc \
+    mingw-w64-x86_64-avr-libc \
+    mingw-w64-x86_64-cmake \
+    mingw-w64-x86_64-ninja \
+    make \
+    mingw-w64-x86_64-srecord"
+
+# 3. Integrate MSYS2 into the Windows System Path
+# This allows 'avr-gcc' to be called directly from standard Windows prompts
+RUN $newPath = 'C:\msys64\mingw64\bin;C:\msys64\usr\bin;' + [Environment]::GetEnvironmentVariable('Path', 'Machine'); \
+    [Environment]::SetEnvironmentVariable('Path', $newPath, 'Machine')
+
+# 4. GENERATE METADATA FILE
+# This queries the installed versions of your key tools and saves them to a file.
+# It also prints them to the build log so you can see them in your CI output.
+RUN C:\msys64\usr\bin\bash.exe -lc "pacman -Q \
+    mingw-w64-x86_64-avr-gcc \
+    mingw-w64-x86_64-avr-libc \
+    mingw-w64-x86_64-cmake \
+    mingw-w64-x86_64-ninja \
+    make \
+    mingw-w64-x86_64-srecord > /toolchain_metadata.txt"; \
+    Get-Content C:\msys64\toolchain_metadata.txt
+
+# Define the entrypoint to verify the toolchain
+CMD ["avr-gcc", "--version"]
