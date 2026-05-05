@@ -20,7 +20,7 @@ RUN Get-Content 'C:\msys64\packages.txt' | Set-Content -Path 'C:\msys64\packages
 # We install: avr-gcc, avr-libc, cmake, ninja, make, and srecord
 RUN C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'; \
     C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'; \
-    C:\msys64\usr\bin\bash.exe -lc 'cat /packages_clean.txt | xargs pacman --needed --noconfirm -S'
+    C:\msys64\usr\bin\bash.exe -lc 'cat /packages_clean.txt | xargs pacman --needed --noconfirm -Sy'
 
 # 3. Integrate MSYS2 into the Windows System Path
 # This allows 'avr-gcc' to be called directly from standard Windows prompts
