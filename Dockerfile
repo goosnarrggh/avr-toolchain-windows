@@ -28,7 +28,7 @@ COPY --from=builder C:/msys64/ucrt64 C:/msys64/ucrt64
 COPY --from=builder C:/msys64/toolchain_metadata.txt C:/msys64/toolchain_metadata.txt
 
 # Set the System Path to include our new toolchain
-ENV PATH="C:\msys64\ucrt64\bin;C:\msys64\ucrt64\usr\bin;C:\Windows\system32;C:\Windows"
+ENV PATH="C:\msys64\ucrt64\bin;${PATH}"
 
 # Smoke test each entry point
 RUN avr-gcc --version && \
