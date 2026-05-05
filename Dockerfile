@@ -31,7 +31,7 @@ COPY --from=builder C:/msys64/ucrt64 C:/msys64/ucrt64
 COPY --from=builder C:/msys64/toolchain_metadata.txt C:/msys64/toolchain_metadata.txt
 
 # Path Setup
-ENV PATH="C:\msys64\mingw64\bin;C:\msys64\usr\bin;${PATH}"
+ENV PATH="C:\msys64\ucrt64\bin;C:\msys64\ucrt64\usr\bin;C:\Windows\system32;C:\Windows"
 
 # Define the entrypoint to verify the toolchain
 CMD ["avr-gcc", "--version"]
