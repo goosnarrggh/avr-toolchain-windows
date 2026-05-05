@@ -1,6 +1,6 @@
 # STAGE I: Build on the server core.
 # Use official Microsoft base for the highest level of trust
-FROM mcr.microsoft.com/windows/servercore:ltsc2025 AS builder
+FROM mcr.microsoft.com/windows/servercore:ltsc2022 AS builder
 
 # Set PowerShell as the default shell for setup
 SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop';"]
