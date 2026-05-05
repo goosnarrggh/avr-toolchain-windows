@@ -10,11 +10,14 @@ RUN [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tl
     ./msys2.exe -y -oc:\; \
     Remove-Item msys2.exe
 
+# 2. Copy the list from your Git repo into the MSYS2 root
+COPY packages-win.txt C:/msys64/packages.txt
+
 # 2. Update MSYS2 and install the toolchain + extra utilities
 # We install: avr-gcc, avr-libc, cmake, ninja, make, and srecord
 RUN C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'; \
     C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'; \
-    C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -S mingw-w64-x86_64-avr-binutils mingw-w64-x86_64-avr-gcc mingw-w64-x86_64-avr-libc mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja make mingw-w64-x86_64-srecord'
+    C:\msys64\usr\bin\bash.exe -lc 'xargs pacman --noconfirm -S < /packages.txt'
 
 # 3. Integrate MSYS2 into the Windows System Path
 # This allows 'avr-gcc' to be called directly from standard Windows prompts
@@ -24,7 +27,7 @@ RUN $newPath = 'C:\msys64\mingw64\bin;C:\msys64\usr\bin;' + [Environment]::GetEn
 # 4. GENERATE METADATA FILE
 # This queries the installed versions of your key tools and saves them to a file.
 # It also prints them to the build log so you can see them in your CI output.
-RUN C:\msys64\usr\bin\bash.exe -lc "pacman -Q mingw-w64-x86_64-avr-binutils mingw-w64-x86_64-avr-gcc mingw-w64-x86_64-avr-libc mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja make mingw-w64-x86_64-srecord > /toolchain_metadata.txt"
+RUN C:\msys64\usr\bin\bash.exe -lc 'xargs pacman -Q < /packages.txt > /toolchain_metadata.txt'
 
 # 5: Read it back using PowerShell
 RUN Get-Content C:\msys64\toolchain_metadata.txt
