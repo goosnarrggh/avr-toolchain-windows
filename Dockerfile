@@ -27,8 +27,8 @@ FROM mcr.microsoft.com/windows/nanoserver:ltsc2022
 ENV PATH="C:\msys64\ucrt64\bin;C:\Windows\system32;C:\Windows"
 
 # Copy ONLY the UCRT64 hierarchy (approx. 600-800MB)
-COPY --from=builder C:\msys64\ucrt64 C:\msys64\ucrt64
-COPY --from=builder C:\msys64\toolchain_metadata.txt C:/msys64/toolchain_metadata.txt
+COPY --from=builder C:/msys64/ucrt64 C:/msys64/ucrt64
+COPY --from=builder C:/msys64/toolchain_metadata.txt C:/msys64/toolchain_metadata.txt
 
 # Path Setup
 ENV PATH="C:\msys64\mingw64\bin;C:\msys64\usr\bin;${PATH}"
