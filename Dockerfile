@@ -23,15 +23,21 @@ RUN C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'; \
 # STAGE II: Copy essentials over to the Nano server
 FROM mcr.microsoft.com/windows/nanoserver:ltsc2022
 
-# Set the System Path to include our new toolchain
-ENV PATH="C:\msys64\ucrt64\bin;C:\Windows\system32;C:\Windows"
-
 # Copy ONLY the UCRT64 hierarchy (approx. 600-800MB)
 COPY --from=builder C:/msys64/ucrt64 C:/msys64/ucrt64
 COPY --from=builder C:/msys64/toolchain_metadata.txt C:/msys64/toolchain_metadata.txt
 
-# Path Setup
+# Set the System Path to include our new toolchain
 ENV PATH="C:\msys64\ucrt64\bin;C:\msys64\ucrt64\usr\bin;C:\Windows\system32;C:\Windows"
+
+# Smoke test each entry point
+RUN avr-gcc --version && \
+    avr-as --version && \
+    avr-ld --version && \
+    cmake --version && \
+    ninja --version && \
+    mingw32-make --version && \
+    srec_cat --version
 
 # Define the entrypoint to verify the toolchain
 CMD ["avr-gcc", "--version"]
