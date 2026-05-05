@@ -13,11 +13,15 @@ RUN [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tl
 # 2. Copy the list from your Git repo into the MSYS2 root
 COPY packages-win.txt C:/msys64/packages.txt
 
-# 2. Update MSYS2 and install the toolchain + extra utilities
+# 3. Read the file and write it back out to ensure clean line endings
+RUN $content = Get-Content 'C:\msys64\packages.txt'; `
+    [System.IO.File]::WriteAllLines('C:\msys64\packages_clean.txt', $content)
+
+# 4. Update MSYS2 and install the toolchain + extra utilities
 # We install: avr-gcc, avr-libc, cmake, ninja, make, and srecord
 RUN C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'; \
     C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'; \
-    C:\msys64\usr\bin\bash.exe -lc 'tr -d "\r" < /packages.txt | xargs pacman --needed --noconfirm -S'
+    C:\msys64\usr\bin\bash.exe -lc 'cat /packages_clean.txt | xargs pacman --needed --noconfirm -S'
 
 # 3. Integrate MSYS2 into the Windows System Path
 # This allows 'avr-gcc' to be called directly from standard Windows prompts
@@ -27,7 +31,7 @@ RUN $newPath = 'C:\msys64\mingw64\bin;C:\msys64\usr\bin;' + [Environment]::GetEn
 # 4. GENERATE METADATA FILE
 # This queries the installed versions of your key tools and saves them to a file.
 # It also prints them to the build log so you can see them in your CI output.
-RUN C:\msys64\usr\bin\bash.exe -lc 'tr -d "\r" < /packages.txt | xargs pacman -Q > /toolchain_metadata.txt'
+RUN C:\msys64\usr\bin\bash.exe -lc 'cat /packages_clean.txt | xargs pacman -Q > /toolchain_metadata.txt'
 
 # 5: Read it back using PowerShell
 RUN Get-Content C:\msys64\toolchain_metadata.txt
