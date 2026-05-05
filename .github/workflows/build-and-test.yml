@@ -40,7 +40,12 @@ jobs:
         run: |
           # Run a quick check to make sure the image actually works
           docker run --rm ghcr.io/${{ github.repository_owner }}/avr-toolchain-windows:latest avr-gcc --version
+          docker run --rm ghcr.io/${{ github.repository_owner }}/avr-toolchain-windows:latest avr-as --version
+          docker run --rm ghcr.io/${{ github.repository_owner }}/avr-toolchain-windows:latest avr-ld --version
           docker run --rm ghcr.io/${{ github.repository_owner }}/avr-toolchain-windows:latest cmake --version
+          docker run --rm ghcr.io/${{ github.repository_owner }}/avr-toolchain-windows:latest ninja --version
+          docker run --rm ghcr.io/${{ github.repository_owner }}/avr-toolchain-windows:latest mingw32-make --version
+          docker run --rm ghcr.io/${{ github.repository_owner }}/avr-toolchain-windows:latest srec_cat --version
 
       - name: Push Image
         # Only push to the registry if the build is on the main branch
