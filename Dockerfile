@@ -17,19 +17,19 @@ COPY packages-win.txt C:/msys64/packages.txt
 # We install: avr-gcc, avr-libc, cmake, ninja, make, and srecord
 RUN C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'; \
     C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'; \
-    C:\msys64\usr\bin\bash.exe -lc 'pacman --needed --noconfirm -Sy < /packages.txt'
+    C:\msys64\usr\bin\bash.exe -lc 'pacman --needed --noconfirm -Sy $(cat /packages.txt)'
 
 # 4. Integrate MSYS2 into the Windows System Path
 # This allows 'avr-gcc' to be called directly from standard Windows prompts
 RUN $newPath = 'C:\msys64\mingw64\bin;C:\msys64\usr\bin;' + [Environment]::GetEnvironmentVariable('Path', 'Machine'); \
     [Environment]::SetEnvironmentVariable('Path', $newPath, 'Machine')
 
-# 4. GENERATE METADATA FILE
+# 5. GENERATE METADATA FILE
 # This queries the installed versions of your key tools and saves them to a file.
 # It also prints them to the build log so you can see them in your CI output.
-RUN C:\msys64\usr\bin\bash.exe -lc 'pacman -Q < /packages.txt > /toolchain_metadata.txt'
+RUN C:\msys64\usr\bin\bash.exe -lc 'pacman -Q $(cat /packages.txt) > /toolchain_metadata.txt'
 
-# 5: Read it back using PowerShell
+# 6: Read it back using PowerShell
 RUN Get-Content C:\msys64\toolchain_metadata.txt
 
 # Define the entrypoint to verify the toolchain
