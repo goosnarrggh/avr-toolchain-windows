@@ -14,7 +14,7 @@ RUN [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tl
 COPY packages-win.txt C:/msys64/packages.txt
 
 # 3. Read the file and write it back out to ensure clean line endings
-RUN Get-Content 'C:\msys64\packages.txt' | Set-Content -Path 'C:\msys64\packages_clean.txt' -Encoding Ascii
+RUN $content = Get-Content 'C:\msys64\packages.txt' -Raw; $clean = $content -replace "\r",""; [System.IO.File]::WriteAllText('C:\msys64\packages_clean.txt', $clean, [System.Text.Encoding]::UTF8)
 
 # 4. Update MSYS2 and install the toolchain + extra utilities
 # We install: avr-gcc, avr-libc, cmake, ninja, make, and srecord
