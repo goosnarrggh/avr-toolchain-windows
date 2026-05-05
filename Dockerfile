@@ -19,9 +19,8 @@ RUN C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'; \
     C:\msys64\usr\bin\bash.exe -lc 'pacman --needed --noconfirm -Sy $(cat /packages.txt)'; \
     C:\msys64\usr\bin\bash.exe -lc 'pacman -Q $(cat /packages.txt) | tee /toolchain_metadata.txt'
 
-# LAYER 4: Path Setup
-RUN $newPath = 'C:\msys64\mingw64\bin;C:\msys64\usr\bin;' + [Environment]::GetEnvironmentVariable('Path', 'Machine'); \
-    [Environment]::SetEnvironmentVariable('Path', $newPath, 'Machine');
+# Path Setup
+ENV PATH="C:\msys64\mingw64\bin;C:\msys64\usr\bin;${PATH}"
 
 
 # Define the entrypoint to verify the toolchain
