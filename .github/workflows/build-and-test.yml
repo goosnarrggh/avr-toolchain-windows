@@ -17,12 +17,17 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Switch Docker to Windows Containers
+      - name: Setup Docker for Windows
         shell: powershell
         run: |
-          & "C:\Program Files\Docker\Docker\resources\bin\docker-switch-linux.exe" -windows
-          # Sometimes a short sleep is needed for the daemon to restart
-          Start-Sleep -s 15
+          # Install the Windows Container feature if not already present
+          Install-WindowsFeature -Name Containers
+          
+          # Force start the Docker service
+          Start-Service docker
+          
+          # Verification: Ensure Docker is looking at Windows
+          docker version
 
       - name: Log in to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
