@@ -23,7 +23,7 @@ RUN C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'; \
 # LAYER 3: Metadata Generation and Output
 
 RUN C:\msys64\usr\bin\bash.exe -lc 'pacman -Q $(cat /packages.txt) > /toolchain_metadata.txt'
-#RUN C:\msys64\usr\bin\bash.exe -lc 'pacman -Q $(cat /packages.txt) > /toolchain_metadata.txt && cat /toolchain_metadata.txt'
+# RUN C:\msys64\usr\bin\bash.exe -lc 'pacman -Q $(cat /packages.txt) > /toolchain_metadata.txt && cat /toolchain_metadata.txt'
 
 
 # Define the entrypoint to verify the toolchain
