@@ -18,10 +18,8 @@ RUN C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'; \
     C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'; \
     C:\msys64\usr\bin\bash.exe -lc 'pacman --needed --noconfirm -Sy $(cat /packages.txt)' \
     $newPath = 'C:\msys64\mingw64\bin;C:\msys64\usr\bin;' + [Environment]::GetEnvironmentVariable('Path', 'Machine'); \
-    [Environment]::SetEnvironmentVariable('Path', $newPath, 'Machine')
-
-# LAYER 3: Metadata Generation and Output
-RUN C:\msys64\usr\bin\bash.exe -lc 'pacman -Q $(cat /packages.txt) > /toolchain_metadata.txt'
+    [Environment]::SetEnvironmentVariable('Path', $newPath, 'Machine'); \
+    C:\msys64\usr\bin\bash.exe -lc 'pacman -Q $(cat /packages.txt) | tee /toolchain_metadata.txt'
 
 
 # Define the entrypoint to verify the toolchain
