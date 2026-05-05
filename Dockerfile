@@ -21,7 +21,7 @@ RUN C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'; \
     C:\msys64\usr\bin\bash.exe -lc 'pacman -Q $(cat /packages.txt) | tee /toolchain_metadata.txt'
 
 # STAGE II: Copy essentials over to the Nano server
-FROM mcr.microsoft.com/windows/nanoserver:ltsc2025
+FROM mcr.microsoft.com/windows/nanoserver:ltsc2022
 
 # Set the System Path to include our new toolchain
 ENV PATH="C:\msys64\ucrt64\bin;C:\Windows\system32;C:\Windows"
