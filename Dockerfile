@@ -1,5 +1,6 @@
+# STAGE I: Build on the server core.
 # Use official Microsoft base for the highest level of trust
-FROM mcr.microsoft.com/windows/servercore:ltsc2022
+FROM mcr.microsoft.com/windows/servercore:ltsc2025 AS builder
 
 # Set PowerShell as the default shell for setup
 SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop';"]
@@ -19,9 +20,18 @@ RUN C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'; \
     C:\msys64\usr\bin\bash.exe -lc 'pacman --needed --noconfirm -Sy $(cat /packages.txt)'; \
     C:\msys64\usr\bin\bash.exe -lc 'pacman -Q $(cat /packages.txt) | tee /toolchain_metadata.txt'
 
+# STAGE II: Copy essentials over to the Nano server
+FROM mcr.microsoft.com/windows/nanoserver:ltsc2025
+
+# Set the System Path to include our new toolchain
+ENV PATH="C:\msys64\ucrt64\bin;C:\Windows\system32;C:\Windows"
+
+# Copy ONLY the UCRT64 hierarchy (approx. 600-800MB)
+COPY --from=builder C:\msys64\ucrt64 C:\msys64\ucrt64
+COPY --from=builder C:\msys64\toolchain_metadata.txt C:/msys64/toolchain_metadata.txt
+
 # Path Setup
 ENV PATH="C:\msys64\mingw64\bin;C:\msys64\usr\bin;${PATH}"
-
 
 # Define the entrypoint to verify the toolchain
 CMD ["avr-gcc", "--version"]
