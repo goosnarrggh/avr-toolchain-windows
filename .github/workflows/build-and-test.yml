@@ -174,7 +174,7 @@ jobs:
         run: |
           for tool in avr-gcc avr-as avr-ld cmake ninja mingw32-make srec_cat; do
             docker run --rm "$IMAGE" "$tool" --version
-         done
+          done
 
       - name: Sample AVR Build
         run: |
