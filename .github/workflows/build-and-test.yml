@@ -52,7 +52,7 @@ jobs:
           docker run --rm `
             -v "${{ github.workspace }}\tests\hello:C:\hello" `
             ghcr.io/${{ github.repository_owner }}/avr-toolchain-windows:latest `
-            C:\Windows\System32\cmd.exe /S /C "cmake -S C:\hello -B C:\hello\build -G Ninja -DCMAKE_TOOLCHAIN_FILE=C:\hello\avr-toolchain.cmake && cmake --build C:\build"
+            C:\Windows\System32\cmd.exe /S /C "cmake -S C:\hello -B C:\build -G Ninja -DCMAKE_TOOLCHAIN_FILE=C:\hello\avr-toolchain.cmake && cmake --build C:\build"
 
       - name: Push Image
         # Only push to the registry if the build is on the main branch
