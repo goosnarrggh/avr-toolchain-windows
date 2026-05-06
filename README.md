@@ -17,15 +17,15 @@ Both images include:
 - CMake, Ninja, and GNU Make
 - SRecord (`srec_cat`, `srec_cmp`, `srec_info`)
 
-The logical package list for Windows is maintained in `packages/toolchain.txt`. The Windows Dockerfile prefixes those names with `mingw-w64-ucrt-x86_64-` before invoking MSYS2 `pacman`.
+The Windows package list is maintained in `packages/windows.txt` using the full MSYS2 UCRT64 package names.
 
 The Arch image uses `packages/arch-official.txt` for packages available from the official Arch Linux repositories and `packages/arch-aur.txt` for packages that must be built from AUR. SRecord is currently in AUR, so the Arch Dockerfile builds it from the upstream AUR `PKGBUILD` during the image build.
 
-The workflow publishes stable tags for each platform and detailed tags that include the major.minor.patch versions of the AVR compiler, binutils, and C library packages. For example, if the installed packages are `avr-gcc` 15.2.0, `avr-binutils` 2.46.0, and `avr-libc` 2.3.1, the workflow also tags images as:
+The workflow publishes stable tags for each platform and detailed tags that include the major.minor or major.minor.patch versions of the AVR compiler, binutils, and C library packages. For example, if the installed packages are `avr-gcc` 15.2.0, `avr-binutils` 2.46, and `avr-libc` 2.3.1, the workflow also tags images as:
 
 ```txt
-servercore-ltsc2022-avrgcc15.2.0-binutils2.46.0-avrlibc2.3.1
-arch-avrgcc15.2.0-binutils2.46.0-avrlibc2.3.1
+servercore-ltsc2022-avrgcc15.2.0-binutils2.46-avrlibc2.3.1
+arch-avrgcc15.2.0-binutils2.46-avrlibc2.3.1
 ```
 
 Those detailed tags are derived from the packages installed in each image, so the Windows and Arch tags can differ if their upstream package repositories carry different versions.

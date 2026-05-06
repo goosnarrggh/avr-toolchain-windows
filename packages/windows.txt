@@ -1,0 +1,8 @@
+# MSYS2 UCRT64 packages for the Windows image.
+mingw-w64-ucrt-x86_64-avr-binutils
+mingw-w64-ucrt-x86_64-avr-gcc
+mingw-w64-ucrt-x86_64-avr-libc
+mingw-w64-ucrt-x86_64-cmake
+mingw-w64-ucrt-x86_64-ninja
+mingw-w64-ucrt-x86_64-make
+mingw-w64-ucrt-x86_64-srecord

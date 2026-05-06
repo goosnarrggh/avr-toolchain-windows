@@ -7,10 +7,9 @@ RUN [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tl
     ./msys2.exe -y -oc:\; \
     Remove-Item msys2.exe
 
-COPY packages/toolchain.txt C:/msys64/packages-base.txt
+COPY packages/windows.txt C:/msys64/packages.txt
 
-RUN C:\msys64\usr\bin\bash.exe -lc "set -euo pipefail; tr -d '\r' < /packages-base.txt | sed -e 's/#.*//' -e '/^[[:space:]]*$/d' | sed 's/^/mingw-w64-ucrt-x86_64-/' > /packages.txt"; \
-    C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'; \
+RUN C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'; \
     C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'; \
     C:\msys64\usr\bin\bash.exe -lc 'pacman --needed --noconfirm -Sy $(cat /packages.txt)'; \
     C:\msys64\usr\bin\bash.exe -lc 'pacman -Q $(cat /packages.txt) | tee /toolchain_metadata.txt'
