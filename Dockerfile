@@ -20,8 +20,8 @@ RUN C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'; \
     C:\msys64\usr\bin\bash.exe -lc 'pacman --needed --noconfirm -Sy $(cat /packages.txt)'; \
     C:\msys64\usr\bin\bash.exe -lc 'pacman -Q $(cat /packages.txt) | tee /toolchain_metadata.txt'
 
-# Set the System Path to include our new toolchain
-ENV PATH="C:\msys64\ucrt64\bin;C:\Windows\system32;C:\Windows"
+# Path Setup
+ENV PATH="C:\msys64\ucrt64\bin;C:\msys64\usr\bin;${PATH}"
 
 # Smoke test each entry point
 RUN cmd /S /C "avr-gcc --version && avr-as --version && avr-ld --version && cmake --version && ninja --version && mingw32-make --version && srec_cat --version"
