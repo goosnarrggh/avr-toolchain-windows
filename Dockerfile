@@ -27,8 +27,6 @@ FROM mcr.microsoft.com/windows/nanoserver:ltsc2022
 COPY --from=builder ["C:/msys64/ucrt64/", "C:/msys64/ucrt64/"]
 COPY --from=builder C:/msys64/toolchain_metadata.txt C:/msys64/toolchain_metadata.txt
 
-RUN dir "C:\msys64\ucrt64" /s /b
-
 # Set the System Path to include our new toolchain
 ENV PATH="C:\msys64\ucrt64\bin;${PATH}"
 
@@ -39,6 +37,8 @@ RUN avr-gcc --version && \
     cmake --version && \
     ninja --version && \
     mingw32-make --version && \
+    hmac256 --version && \
+    gpg-error --version && \
     srec_cat --version
 
 # Define the entrypoint to verify the toolchain
