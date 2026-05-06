@@ -140,7 +140,7 @@ jobs:
           metadata="$(docker run --rm "$IMAGE" pacman -Q avr-gcc avr-binutils avr-libc)"
           gcc_version=
           binutils_version=
-         libc_version=
+          libc_version=
 
           while read -r name version; do
             version="${version%%-*}"
