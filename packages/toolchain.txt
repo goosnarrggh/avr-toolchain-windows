@@ -1,0 +1,8 @@
+# Logical package names shared by all image builds.
+avr-binutils
+avr-gcc
+avr-libc
+cmake
+ninja
+make
+srecord

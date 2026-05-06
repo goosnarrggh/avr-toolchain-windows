@@ -1,20 +1,32 @@
-# AVR toolchain (Windows container)
+# AVR toolchain containers
 
-This repository builds a **Windows Server Core** Docker image with an **Atmel/Microchip AVR** cross-compilation toolchain and common build utilities, assembled on top of **MSYS2**.
+This repository builds container images with an **Atmel/Microchip AVR** cross-compilation toolchain and common build utilities.
 
-The image is intended for CI (for example GitHub Actions on `windows-2022`) or any environment where you want a reproducible AVR build on Windows containers without maintaining the toolchain on the host.
+The images are intended for CI or any environment where you want a reproducible AVR build without maintaining the toolchain on the host.
 
 ## What the image includes
 
-| Area | Details |
-|------|---------|
-| **Base** | `mcr.microsoft.com/windows/servercore:ltsc2022` |
-| **Runtime / packaging** | [MSYS2](https://www.msys2.org/) installed under `C:\msys64`, with `C:\msys64\mingw64\bin` and `C:\msys64\usr\bin` on the machine `PATH` |
-| **AVR toolchain** | `avr-gcc`, binutils, and **avr-libc** (MINGW packages: `mingw-w64-x86_64-avr-gcc`, `mingw-w64-x86_64-avr-libc`) |
-| **Build tools** | CMake, Ninja, GNU Make |
-| **Utilities** | **srecord** (ROM/hex manipulation and conversion) |
+| Image | Base | Package source |
+|-------|------|----------------|
+| Windows | `mcr.microsoft.com/windows/servercore:ltsc2022` | MSYS2 UCRT64 |
+| Arch Linux | `archlinux:base` | Arch Linux repositories |
 
-During the image build, installed package versions are written under the MSYS root as `toolchain_metadata.txt` (from `pacman -Q` on those packages) and echoed in the build log.
+Both images include:
+
+- `avr-gcc`, AVR binutils, and `avr-libc`
+- CMake, Ninja, and GNU Make
+- SRecord (`srec_cat`, `srec_cmp`, `srec_info`)
+
+The logical package list is maintained in `packages/toolchain.txt`. The Windows Dockerfile prefixes those names with `mingw-w64-ucrt-x86_64-` before invoking MSYS2 `pacman`; the Arch Dockerfile installs the same logical names directly with Arch `pacman`.
+
+The workflow publishes stable tags for each platform and detailed tags that include the major.minor.patch versions of the AVR compiler, binutils, and C library packages. For example, if the installed packages are `avr-gcc` 15.2.0, `avr-binutils` 2.46.0, and `avr-libc` 2.3.1, the workflow also tags images as:
+
+```txt
+servercore-ltsc2022-avrgcc15.2.0-binutils2.46.0-avrlibc2.3.1
+arch-avrgcc15.2.0-binutils2.46.0-avrlibc2.3.1
+```
+
+Those detailed tags are derived from the packages installed in each image, so the Windows and Arch tags can differ if their upstream package repositories carry different versions.
 
 The default container command runs `avr-gcc --version` as a quick sanity check.
 
@@ -23,20 +35,45 @@ The default container command runs `avr-gcc --version` as a quick sanity check.
 After the workflow publishes to GitHub Container Registry, pull and run:
 
 ```powershell
-docker pull ghcr.io/goosnarrggh/avr-toolchain-windows:latest
-docker run --rm ghcr.io/goosnarrggh/avr-toolchain-windows:latest avr-gcc --version
+docker pull ghcr.io/goosnarrggh/avr-toolchain-windows:servercore-ltsc2022
+docker run --rm ghcr.io/goosnarrggh/avr-toolchain-windows:servercore-ltsc2022 avr-gcc --version
 ```
+
+The `latest` tag is also assigned to the Windows Server Core image for compatibility. Prefer the detailed tags when you need to protect downstream CI from AVR toolchain version changes.
 
 Build locally on a Windows machine with Docker in **Windows containers** mode:
 
 ```powershell
-docker build -t avr-toolchain-windows:latest .
-docker run --rm avr-toolchain-windows:latest cmake --version
+docker build -f images/windows/Dockerfile -t avr-toolchain-windows:servercore-ltsc2022 .
+docker run --rm avr-toolchain-windows:servercore-ltsc2022 cmake --version
+```
+
+Build the Arch Linux image with Docker in Linux containers mode:
+
+```sh
+docker build -f images/arch/Dockerfile -t avr-toolchain-windows:arch .
+docker run --rm avr-toolchain-windows:arch cmake --version
+```
+
+Run the shared AVR smoke project:
+
+```powershell
+docker run --rm `
+  -v "${PWD}\tests\hello:C:\hello" `
+  avr-toolchain-windows:servercore-ltsc2022 `
+  C:\Windows\System32\cmd.exe /S /C "cmake -S C:\hello -B C:\build -G Ninja -DCMAKE_TOOLCHAIN_FILE=C:\hello\avr-toolchain.cmake && cmake --build C:\build"
+```
+
+```sh
+docker run --rm \
+  -v "$PWD/tests/hello:/hello:ro" \
+  avr-toolchain-windows:arch \
+  sh -c 'cmake -S /hello -B /build -G Ninja -DCMAKE_TOOLCHAIN_FILE=/hello/avr-toolchain.cmake && cmake --build /build'
 ```
 
 ## Where the software comes from
 
-**This repository** only contains the **Dockerfile** and automation that download MSYS2, run `pacman`, and configure `PATH`. It does not vendor the compiler or libraries; those are the same packages you would get from an MSYS2 install.
+**This repository** only contains Dockerfiles, package manifests, and automation that invoke upstream package managers. It does not vendor the compiler or libraries; those are the same packages you would get from MSYS2 or Arch Linux.
 
 To inspect or rebuild from source, use the links below.
 
@@ -46,8 +83,15 @@ To inspect or rebuild from source, use the links below.
 |-------|----------------|
 | MSYS2 project & docs | [msys2.org](https://www.msys2.org/), [github.com/msys2](https://github.com/msys2) |
 | Self-extracting installer (what the Dockerfile downloads) | [msys2/msys2-installer](https://github.com/msys2/msys2-installer) |
-| **MINGW** package recipes (AVR GCC, avr-libc, CMake, Ninja, srecord, etc.) | [msys2/MINGW-packages](https://github.com/msys2/MINGW-packages) — search for the package name (for example `mingw-w64-avr-gcc`) |
+| **MINGW/UCRT64** package recipes (AVR GCC, avr-libc, CMake, Ninja, srecord, etc.) | [msys2/MINGW-packages](https://github.com/msys2/MINGW-packages) — search for the package name (for example `mingw-w64-avr-gcc`) |
 | **MSYS** package recipes (`make`, and other `/usr` tools) | [msys2/MSYS2-packages](https://github.com/msys2/MSYS2-packages) |
+
+### Arch Linux packages
+
+| Topic | Where to look |
+|-------|---------------|
+| Arch package search | [archlinux.org/packages](https://archlinux.org/packages/) |
+| Packaging source | [gitlab.archlinux.org/archlinux/packaging/packages](https://gitlab.archlinux.org/archlinux/packaging/packages) |
 
 Each package directory contains a `PKGBUILD` and patches; that file lists upstream URLs and version pins.
 
