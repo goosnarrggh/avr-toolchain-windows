@@ -9,7 +9,7 @@ The images are intended for CI or any environment where you want a reproducible 
 | Image | Base | Package source |
 |-------|------|----------------|
 | Windows | `mcr.microsoft.com/windows/servercore:ltsc2022` | MSYS2 UCRT64 |
-| Arch Linux | `archlinux:base` | Arch Linux repositories |
+| Arch Linux | `archlinux:base` | Arch Linux repositories plus AUR for SRecord |
 
 Both images include:
 
@@ -17,7 +17,9 @@ Both images include:
 - CMake, Ninja, and GNU Make
 - SRecord (`srec_cat`, `srec_cmp`, `srec_info`)
 
-The logical package list is maintained in `packages/toolchain.txt`. The Windows Dockerfile prefixes those names with `mingw-w64-ucrt-x86_64-` before invoking MSYS2 `pacman`; the Arch Dockerfile installs the same logical names directly with Arch `pacman`.
+The logical package list for Windows is maintained in `packages/toolchain.txt`. The Windows Dockerfile prefixes those names with `mingw-w64-ucrt-x86_64-` before invoking MSYS2 `pacman`.
+
+The Arch image uses `packages/arch-official.txt` for packages available from the official Arch Linux repositories and `packages/arch-aur.txt` for packages that must be built from AUR. SRecord is currently in AUR, so the Arch Dockerfile builds it from the upstream AUR `PKGBUILD` during the image build.
 
 The workflow publishes stable tags for each platform and detailed tags that include the major.minor.patch versions of the AVR compiler, binutils, and C library packages. For example, if the installed packages are `avr-gcc` 15.2.0, `avr-binutils` 2.46.0, and `avr-libc` 2.3.1, the workflow also tags images as:
 
@@ -92,6 +94,7 @@ To inspect or rebuild from source, use the links below.
 |-------|---------------|
 | Arch package search | [archlinux.org/packages](https://archlinux.org/packages/) |
 | Packaging source | [gitlab.archlinux.org/archlinux/packaging/packages](https://gitlab.archlinux.org/archlinux/packaging/packages) |
+| AUR package search | [aur.archlinux.org/packages](https://aur.archlinux.org/packages) |
 
 Each package directory contains a `PKGBUILD` and patches; that file lists upstream URLs and version pins.
 

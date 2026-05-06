@@ -1,0 +1,2 @@
+# Arch Linux AUR package names.
+srecord
