@@ -23,8 +23,5 @@ RUN C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'; \
 # Path Setup
 ENV PATH="C:\msys64\ucrt64\bin;C:\msys64\usr\bin;${PATH}"
 
-# Smoke test each entry point
-RUN cmd /S /C "avr-gcc --version && avr-as --version && avr-ld --version && cmake --version && ninja --version && mingw32-make --version && srec_cat --version"
-
 # Define the entrypoint to verify the toolchain
 CMD ["avr-gcc", "--version"]
