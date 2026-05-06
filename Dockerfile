@@ -20,8 +20,12 @@ RUN C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'; \
     C:\msys64\usr\bin\bash.exe -lc 'pacman --needed --noconfirm -Sy $(cat /packages.txt)'; \
     C:\msys64\usr\bin\bash.exe -lc 'pacman -Q $(cat /packages.txt) | tee /toolchain_metadata.txt'
 
+RUN dir "C:\msys64\ucrt64" /s /b
+
 # STAGE II: Copy essentials over to the Nano server
 FROM mcr.microsoft.com/windows/nanoserver:ltsc2022
+
+SHELL ["cmd", "/S", "/C"]
 
 # Copy ONLY the UCRT64 hierarchy (approx. 600-800MB)
 COPY --from=builder ["C:/msys64/ucrt64/", "C:/msys64/ucrt64/"]
