@@ -1,4 +1,3 @@
-# tests/smoke/CMakeLists.txt
 cmake_minimum_required(VERSION 3.20)
 project(avr_smoke C)
 add_executable(smoke.elf main.c)
