@@ -18,7 +18,8 @@ COPY packages-win.txt C:/msys64/packages.txt
 RUN C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'; \
     C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'; \
     C:\msys64\usr\bin\bash.exe -lc 'pacman --needed --noconfirm -Sy $(cat /packages.txt)'; \
-    C:\msys64\usr\bin\bash.exe -lc 'pacman -Q $(cat /packages.txt) | tee /toolchain_metadata.txt'
+    C:\msys64\usr\bin\bash.exe -lc 'pacman -Q $(cat /packages.txt) | tee /toolchain_metadata.txt' \
+    (Get-ChildItem -Path "C:\msys2\ucrt64" -Recurse).FullName
 
 RUN (Get-ChildItem -Path "C:\msys2\ucrt64" -Recurse).FullName
 
