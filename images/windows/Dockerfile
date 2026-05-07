@@ -7,12 +7,9 @@ RUN [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tl
     ./msys2.exe -y -oc:\; \
     Remove-Item msys2.exe
 
-COPY packages/windows.txt C:/msys64/packages.txt
+COPY packages/windows.txt C:/msys64/packages-source.txt
 
-RUN C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'; \
-    C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'; \
-    C:\msys64\usr\bin\bash.exe -lc 'pacman --needed --noconfirm -Sy $(cat /packages.txt)'; \
-    C:\msys64\usr\bin\bash.exe -lc 'pacman -Q $(cat /packages.txt) | tee /toolchain_metadata.txt'
+RUN C:\msys64\usr\bin\bash.exe -lc "set -euo pipefail; tr -d '\r' < /packages-source.txt | sed -e 's/#.*//' -e '/^[[:space:]]*$/d' > /packages.txt; pacman --noconfirm -Syuu; pacman --noconfirm -Syuu; pacman --needed --noconfirm -Sy $(cat /packages.txt); pacman -Q $(cat /packages.txt) | tee /toolchain_metadata.txt"
 
 ENV Path="C:\msys64\ucrt64\bin;C:\msys64\usr\bin;C:\Windows\System32\WindowsPowerShell\v1.0;C:\Windows\System32;C:\Windows;C:\Windows\System32\Wbem"
 
