@@ -6,17 +6,22 @@ COPY packages/arch-aur.txt /tmp/arch-aur.txt
 RUN set -eux; \
  official_packages="$(tr -d '\r' < /tmp/arch-official.txt | sed -e 's/#.*//' -e '/^[[:space:]]*$/d')"; \
  aur_packages="$(tr -d '\r' < /tmp/arch-aur.txt | sed -e 's/#.*//' -e '/^[[:space:]]*$/d')"; \
- pacman -Syu --noconfirm --needed $official_packages base-devel git sudo; \
+ pacman -Syu --noconfirm --needed $official_packages; \
+ pacman -Suy --noconfirm --needed --asdeps base-devel git sudo; \
  useradd --create-home --shell /bin/bash builder; \
  printf 'builder ALL=(ALL) NOPASSWD: ALL\n' > /etc/sudoers.d/builder; \
  chmod 0440 /etc/sudoers.d/builder; \
  for package in $aur_packages; do \
- su builder -c "cd /tmp && git clone https://aur.archlinux.org/${package}.git && cd ${package} && makepkg --syncdeps --noconfirm --needed"; \
- pacman -U --noconfirm /tmp/${package}/*.pkg.tar.zst; \
+  su builder -c "cd /tmp && git clone https://aur.archlinux.org/${package}.git && cd ${package} && makepkg --syncdeps --noconfirm --needed"; \
+  pacman -U --noconfirm /tmp/${package}/*.pkg.tar.zst; \
  done; \
- ln -sf /usr/bin/make /usr/local/bin/mingw32-make; \
- pacman -Scc --noconfirm; \
  userdel --remove builder; \
- rm -rf /tmp/arch-official.txt /tmp/arch-aur.txt /tmp/srecord /etc/sudoers.d/builder
+ rm -rf /tmp/* /home/builder /etc/sudoers.d/builder; \
+ pacman -Rns --noconfirm $(pacman -Qtdq) || true; \
+ pacman -Scc --noconfirm; \
+ pacman -Q $official_packages | tee /toolchain_metadata.txt; \
+ if [ -n "$aur_packages" ]; then \
+  pacman -Q $aur_packages | tee -a /toolchain_metadata.txt; \
+ fi
 
 CMD ["avr-gcc", "--version"]

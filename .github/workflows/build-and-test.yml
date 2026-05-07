@@ -47,7 +47,14 @@ jobs:
       - name: Tag Image with Toolchain Versions
         shell: powershell
         run: |
-          $metadata = docker run --rm $env:IMAGE C:\msys64\usr\bin\bash.exe -lc "pacman -Q mingw-w64-ucrt-x86_64-avr-gcc mingw-w64-ucrt-x86_64-avr-binutils mingw-w64-ucrt-x86_64-avr-libc"
+          $container = docker create $env:IMAGE
+          try {
+            docker cp "${container}:C:/msys64/toolchain_metadata.txt" toolchain_metadata.txt
+          }
+          finally {
+            docker rm $container
+          }
+          $metadata = Get-Content toolchain_metadata.txt
           $versions = @{}
 
           foreach ($line in $metadata) {
@@ -137,7 +144,10 @@ jobs:
 
       - name: Tag Image with Toolchain Versions
         run: |
-          metadata="$(docker run --rm "$IMAGE" pacman -Q avr-gcc avr-binutils avr-libc)"
+          container="$(docker create "$IMAGE")"
+          docker cp "$container:/toolchain_metadata.txt" toolchain_metadata.txt
+          docker rm "$container"
+          metadata="$(cat toolchain_metadata.txt)"
           gcc_version=
           binutils_version=
           libc_version=
