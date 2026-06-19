@@ -1,0 +1,7 @@
+# Packages installed from Arch Linux official repositories.
+avr-binutils
+avr-gcc
+avr-libc
+cmake
+ninja
+make

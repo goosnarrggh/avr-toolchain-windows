@@ -1,0 +1,198 @@
+name: Build Toolchain Images
+
+on:
+  push:
+    branches: [ main ]  # Triggers when you push to the main branch
+  pull_request:         # Triggers when you open a PR
+  workflow_dispatch:    # Adds a "Run workflow" button in the GitHub UI for manual testing
+
+jobs:
+  build-windows-image:
+    runs-on: windows-2022  # Uses a Windows VM to build the Windows container
+    env:
+      IMAGE: ghcr.io/${{ github.repository_owner }}/avr-toolchain-windows:servercore-ltsc2022
+      LATEST_IMAGE: ghcr.io/${{ github.repository_owner }}/avr-toolchain-windows:latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup Docker for Windows
+        shell: powershell
+        run: |
+          # Install the Windows Container feature if not already present
+          Install-WindowsFeature -Name Containers
+          
+          # Force start the Docker service
+          Start-Service docker
+          
+          # Verification: Ensure Docker is looking at Windows
+          docker version
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build Docker Image
+        shell: powershell
+        run: |
+          docker build `
+            -f images/windows/Dockerfile `
+            -t $env:IMAGE `
+            -t $env:LATEST_IMAGE `
+            .
+
+      - name: Tag Image with Toolchain Versions
+        shell: powershell
+        run: |
+          $container = docker create $env:IMAGE
+          try {
+            docker cp "${container}:C:/msys64/toolchain_metadata.txt" toolchain_metadata.txt
+          }
+          finally {
+            docker rm $container
+          }
+          $metadata = Get-Content toolchain_metadata.txt
+          $versions = @{}
+
+          foreach ($line in $metadata) {
+            $parts = $line.Trim() -split '\s+'
+            if ($parts.Length -lt 2) {
+              continue
+            }
+
+            $version = $parts[1] -replace '-.*$', ''
+            if ($version -notmatch '^\d+\.\d+(\.\d+)?$') {
+              throw "Expected major.minor[.patch] version for $($parts[0]), got $version"
+            }
+
+            switch -Wildcard ($parts[0]) {
+              "*-avr-gcc" { $versions["gcc"] = $version }
+              "*-avr-binutils" { $versions["binutils"] = $version }
+              "*-avr-libc" { $versions["libc"] = $version }
+            }
+          }
+
+          foreach ($key in @("gcc", "binutils", "libc")) {
+            if (-not $versions.ContainsKey($key)) {
+              throw "Could not determine AVR toolchain version for $key"
+            }
+          }
+
+          $detailedImage = "ghcr.io/${{ github.repository_owner }}/avr-toolchain-windows:servercore-ltsc2022-avrgcc$($versions["gcc"])-binutils$($versions["binutils"])-avrlibc$($versions["libc"])"
+          docker tag $env:IMAGE $detailedImage
+          "DETAILED_IMAGE=$detailedImage" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host "Tagged $detailedImage"
+
+      - name: Verify Toolchain
+        shell: powershell
+        run: |
+          $tools = @(
+            "avr-gcc",
+            "avr-as",
+            "avr-ld",
+            "cmake",
+            "ninja",
+            "mingw32-make",
+            "srec_cat"
+          )
+
+          foreach ($tool in $tools) {
+            docker run --rm $env:IMAGE $tool --version
+          }
+
+      - name: Sample AVR Build
+        shell: powershell
+        run: |
+          docker run --rm `
+            -v "${{ github.workspace }}\tests\hello:C:\hello" `
+            $env:IMAGE `
+            C:\Windows\System32\cmd.exe /S /C "cmake -S C:\hello -B C:\build -G Ninja -DCMAKE_TOOLCHAIN_FILE=C:\hello\avr-toolchain.cmake && cmake --build C:\build"
+
+      - name: Push Image
+        # Only push to the registry if the build is on the main branch
+        if: github.ref == 'refs/heads/main'
+        shell: powershell
+        run: |
+          docker push $env:IMAGE
+          docker push $env:LATEST_IMAGE
+          docker push $env:DETAILED_IMAGE
+
+  build-arch-image:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE: ghcr.io/${{ github.repository_owner }}/avr-toolchain-windows:arch
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build Docker Image
+        run: |
+          docker build \
+            -f images/arch/Dockerfile \
+            -t "$IMAGE" \
+            .
+
+      - name: Tag Image with Toolchain Versions
+        run: |
+          container="$(docker create "$IMAGE")"
+          docker cp "$container:/toolchain_metadata.txt" toolchain_metadata.txt
+          docker rm "$container"
+          metadata="$(cat toolchain_metadata.txt)"
+          gcc_version=
+          binutils_version=
+          libc_version=
+
+          while read -r name version; do
+            version="${version%%-*}"
+            if ! printf '%s\n' "$version" | grep -Eq '^[0-9]+\.[0-9]+(\.[0-9]+)?$'; then
+              echo "Expected major.minor[.patch] version for $name, got $version" >&2
+              exit 1
+            fi
+
+            case "$name" in
+              avr-gcc) gcc_version="$version" ;;
+              avr-binutils) binutils_version="$version" ;;
+              avr-libc) libc_version="$version" ;;
+            esac
+          done <<< "$metadata"
+
+          if [ -z "$gcc_version" ] || [ -z "$binutils_version" ] || [ -z "$libc_version" ]; then
+            echo "Could not determine AVR toolchain versions" >&2
+            echo "$metadata" >&2
+            exit 1
+          fi
+
+          detailed_image="ghcr.io/${{ github.repository_owner }}/avr-toolchain-windows:arch-avrgcc${gcc_version}-binutils${binutils_version}-avrlibc${libc_version}"
+          docker tag "$IMAGE" "$detailed_image"
+          echo "DETAILED_IMAGE=$detailed_image" >> "$GITHUB_ENV"
+          echo "Tagged $detailed_image"
+
+      - name: Verify Toolchain
+        run: |
+          for tool in avr-gcc avr-as avr-ld cmake ninja make srec_cat; do
+            docker run --rm "$IMAGE" "$tool" --version
+          done
+
+      - name: Sample AVR Build
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}/tests/hello:/hello:ro" \
+            "$IMAGE" \
+            sh -c 'cmake -S /hello -B /build -G Ninja -DCMAKE_TOOLCHAIN_FILE=/hello/avr-toolchain.cmake && cmake --build /build'
+
+      - name: Push Image
+        # Only push to the registry if the build is on the main branch
+        if: github.ref == 'refs/heads/main'
+        run: |
+          docker push "$IMAGE"
+          docker push "$DETAILED_IMAGE"
